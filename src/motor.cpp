@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 class MotorNode : public rclcpp::Node
 {
 public:
-    MotorNode() : Node("motor"), reference_angle_(60.0)
+    MotorNode() : Node("motor")
     {
         reference_subscriber_ = this->create_subscription<std_msgs::msg::Float64>(
             "reference_angle", 10,
@@ -24,6 +24,7 @@ public:
         Kd_ = 0.0; // Derivative gain
         prev_error_ = 0;
         integral_ = 0;
+	reference_angle_ = 60.0;
 
         // Initialize robot control library
         if (rc_initialize() != 0) {
@@ -53,7 +54,7 @@ private:
         int32_t actual_encoder_value = rc_encoder_read(1);
 	double actual_wheel_angle = actual_encoder_value * 3.141592 / 1250;
 	double reference_wheel_angle = reference_angle_;
-        double error = reference_wheel_angle_ - actual_wheel_angle;
+        double error = reference_wheel_angle - actual_wheel_angle;
 
         // PID control calculations
         integral_ += error;
@@ -64,7 +65,7 @@ private:
 
         // Log the values (optional)
         RCLCPP_INFO(this->get_logger(), "Ref: %d, Act: %d, Err: %d, Ctrl: %d",
-                    reference_wheel_angle_, actual_wheel_angle, error, control_signal);
+                    reference_wheel_angle, actual_wheel_angle, error, control_signal);
 
         prev_error_ = error;
     }
