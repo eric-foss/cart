@@ -17,14 +17,19 @@ public:
 
         timer_ = this->create_wall_timer(
             10ms, std::bind(&MotorNode::control_loop, this));
-        
-        // PID controller parameters
-        Kp_ = 0.001;  // Proportional gain
-        Ki_ = 0.0; // Integral gain
-        Kd_ = 0.0; // Derivative gain
+
+	// Declare and initialize PID controller parameters
+        this->declare_parameter<double>("Kp", 0.0);
+        this->declare_parameter<double>("Ki", 0.0);
+        this->declare_parameter<double>("Kd", 0.0);
+	this->declare_paramter<double>("theta", 0.0);
+        this->get_parameter("Kp", Kp_);
+        this->get_parameter("Ki", Ki_);
+        this->get_parameter("Kd", Kd_);
+	this->get_parameter("theta", reference_angle_);
+
         prev_error_ = 0;
         integral_ = 0;
-	reference_angle_ = 60.0;
 
         // Initialize robot control library
         if (rc_initialize() != 0) {
@@ -34,6 +39,12 @@ public:
 
         // Set motor to freewheel at the start
         rc_motor_free_spin(1);
+
+	// Set up parameter change callback
+        parameter_callback_handle_ = this->add_on_set_parameters_callback(
+            std::bind(&MotorNode::parameter_callback, this, std::placeholders::_1)
+        );
+
     }
 
     ~MotorNode()
@@ -64,14 +75,36 @@ private:
         rc_motor_set(1, control_signal);
 
         // Log the values (optional)
-        RCLCPP_INFO(this->get_logger(), "Ref: %d, Act: %d, Err: %d, Ctrl: %d",
+        RCLCPP_INFO(this->get_logger(), "Ref: %.2f, Act: %.2f, Err: %.2f, Ctrl: %.2f",
                     reference_wheel_angle, actual_wheel_angle, error, control_signal);
 
         prev_error_ = error;
     }
 
+    rcl_interfaces::msg::SetParametersResult parameter_callback(
+        const std::vector<rclcpp::Parameter> &parameters)
+    {
+        for (const auto &param : parameters) {
+            if (param.get_name() == "Kp") {
+                Kp_ = param.as_double();
+            } else if (param.get_name() == "Ki") {
+                Ki_ = param.as_double();
+            } else if (param.get_name() == "Kd") {
+                Kd_ = param.as_double();
+            } else if (param.get_name() == "theta") {
+		reference_angle_ = param.as_double();
+	    }
+        }
+
+        rcl_interfaces::msg::SetParametersResult result;
+        result.successful = true;
+        return result;
+    }
+
+
     rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr reference_subscriber_;
     rclcpp::TimerBase::SharedPtr timer_;
+    OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
     double reference_angle_;
     double Kp_, Ki_, Kd_;
     double prev_error_;
