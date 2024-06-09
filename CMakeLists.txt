@@ -29,7 +29,7 @@ ament_target_dependencies(motor rclcpp std_msgs)
 ament_target_dependencies(magnetometer_node rclcpp std_msgs)
 
 target_link_libraries(motor robotcontrol)
-target_link_libraries(magentometer_node robotcontrol)
+target_link_libraries(magnetometer_node robotcontrol)
 
 install(TARGETS
   magnetometer_node
