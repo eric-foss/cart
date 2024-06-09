@@ -19,10 +19,10 @@ public:
             10ms, std::bind(&MotorNode::control_loop, this));
 
 	// Declare and initialize PID controller parameters
-        this->declare_parameter<double>("Kp", 0.0);
-        this->declare_parameter<double>("Ki", 0.0);
-        this->declare_parameter<double>("Kd", 0.0);
-	this->declare_paramter<double>("theta", 0.0);
+        this->declare_parameter<double>("Kp", 0.0012); //0.0015
+        this->declare_parameter<double>("Ki", 0.00015); //0.00015
+        this->declare_parameter<double>("Kd", 0.0); //0.0
+	this->declare_parameter<double>("theta", 90.0);
         this->get_parameter("Kp", Kp_);
         this->get_parameter("Ki", Ki_);
         this->get_parameter("Kd", Kd_);
@@ -63,20 +63,20 @@ private:
     void control_loop()
     {
         int32_t actual_encoder_value = rc_encoder_read(1);
-	double actual_wheel_angle = actual_encoder_value * 3.141592 / 1250;
-	double reference_wheel_angle = reference_angle_;
+	double actual_wheel_angle = actual_encoder_value * 180 / 1250;
+	double reference_wheel_angle = reference_angle_ * 330/90;
         double error = reference_wheel_angle - actual_wheel_angle;
 
         // PID control calculations
-        integral_ += error;
+        integral_ += error*0.01;
         double derivative = error - prev_error_;
-        double control_signal = std::max(-1.0, std::min(1.0, Kp_ * error + Ki_ * integral_ + Kd_ * derivative));
+        double control_signal = std::max(-0.65, std::min(0.65, Kp_ * error + Ki_ * integral_ + Kd_ * derivative));
         // Send control signal to motor (ensure the value is within motor limits)
         rc_motor_set(1, control_signal);
 
         // Log the values (optional)
-        RCLCPP_INFO(this->get_logger(), "Ref: %.2f, Act: %.2f, Err: %.2f, Ctrl: %.2f",
-                    reference_wheel_angle, actual_wheel_angle, error, control_signal);
+        RCLCPP_INFO(this->get_logger(), "Ref: %.2f, Whl: %.2f, Err: %.2f, Ctrl: %.4f, Dirv: %.4f, Intg: %.4f, Kp: %.4f, Ki: %.4f, Kd: %.4f",
+                    reference_wheel_angle, actual_wheel_angle, error, control_signal, derivative, integral_, Kp_, Ki_, Kd_);
 
         prev_error_ = error;
     }
