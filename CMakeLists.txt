@@ -24,11 +24,15 @@ include_directories(/usr/include)
 link_directories(/usr/lib)
 
 add_executable(motor src/motor.cpp)
+add_executable(magnetometer_node src/magnetometer_node.cpp)
 ament_target_dependencies(motor rclcpp std_msgs)
+ament_target_dependencies(magnetometer_node rclcpp std_msgs)
 
 target_link_libraries(motor robotcontrol)
+target_link_libraries(magentometer_node robotcontrol)
 
 install(TARGETS
+  magnetometer_node
   motor
   DESTINATION lib/${PROJECT_NAME})
 
