@@ -57,6 +57,8 @@ public:
 
         // Set motor to freewheel at the start
         rc_motor_free_spin(1);
+
+        cart_status_publisher_->publish(msg);
     }
 
     ~InclineNode()
@@ -110,12 +112,13 @@ private:
                 cart_status_publisher_->publish(msg);
             }
 
-            if (no_hitch_counter_ > 40) {
+            if (no_hitch_counter_ > 120) {
                 auto vesc_msg_1 = geometry_msgs::msg::Twist();
                 vesc_msg_1.linear.x = -0.5;
                 vesc_publisher_->publish(vesc_msg_1);
                 vesc_timer_ = this->create_wall_timer(
-                    500ms, std::bind(&InclineNode::vesc_stop, this));
+                    100ms, std::bind(&InclineNode::vesc_stop, this));
+                no_hitch_counter_ = 0;
             }
 
 
