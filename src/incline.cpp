@@ -3,7 +3,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/empty.hpp>
-#include <geometry_msgs/msg/Twist.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 #include <robotcontrol.h>
 
 using namespace std::chrono_literals;
@@ -17,7 +17,7 @@ public:
         //Set up motor subscriber: runs motor when 1, stops motor when 0
         motor_status_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
             "motor_status", 10, std::bind(&InclineNode::start_motor_callback, this, std::placeholders::_1));
-        
+
         //Set up cart status publisher: wants to rotate when 1, doesn't when 0
         cart_status_publisher_ = this->create_publisher<std_msgs::msg::Bool>("cart_status", 10);
         auto msg = std_msgs::msg::Bool();
@@ -30,8 +30,8 @@ public:
         control_timer_ = this->create_wall_timer(
             50ms, std::bind(&InclineNode::control_loop, this));
 
-	    status_timer_ = this->create_wall_timer(
-	        5000ms, std::bind(&InclineNode::status_loop, this));
+        status_timer_ = this->create_wall_timer(
+            5000ms, std::bind(&InclineNode::status_loop, this));
 
         // Initialize robot control library
         if (rc_initialize() != 0) {
@@ -41,18 +41,18 @@ public:
         RCLCPP_INFO(this->get_logger(), "RC Library has been initialized");
 
 	    // Initialize Motors
-	    if (rc_motor_init() != 0) {
-	        RCLCPP_FATAL(this->get_logger(), "Failed to initialize motor");
-	        rclcpp::shutdown();
-    	}
-
-	    // Initialize IMU
-	    rc_mpu_config_t conf = rc_mpu_default_config();
-	    conf.i2c_bus = 2;
-	    if (rc_mpu_initialize(&data_, conf) != 0) {
-	        RCLCPP_FATAL(this->get_logger(), "Failed to initialize MPU");
+        if (rc_motor_init() != 0) {
+            RCLCPP_FATAL(this->get_logger(), "Failed to initialize motor");
             rclcpp::shutdown();
-	    }
+        }
+
+        // Initialize IMU
+        rc_mpu_config_t conf = rc_mpu_default_config();
+        conf.i2c_bus = 2;
+        if (rc_mpu_initialize(&data_, conf) != 0) {
+            RCLCPP_FATAL(this->get_logger(), "Failed to initialize MPU");
+            rclcpp::shutdown();
+        }
         RCLCPP_INFO(this->get_logger(), "IMU has been initialized");
 
         // Set motor to freewheel at the start
@@ -63,7 +63,7 @@ public:
     {
         // Cleanup robot control library
         rc_motor_free_spin(1);
-	    rc_mpu_power_off();
+        rc_mpu_power_off();
         rc_cleanup();
     }
 
@@ -149,7 +149,6 @@ private:
     rclcpp::TimerBase::SharedPtr control_timer_;
     rclcpp::TimerBase::SharedPtr status_timer_;
     rclcpp::TimerBase::SharedPtr vesc_timer_;
-    rclcpp
     rc_mpu_data_t data_;
     bool motor_running_;
     double theta_;

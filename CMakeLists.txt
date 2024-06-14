@@ -34,7 +34,7 @@ ament_target_dependencies(motor rclcpp std_msgs)
 ament_target_dependencies(magnetometer_node rclcpp std_msgs)
 ament_target_dependencies(rotate rclcpp std_msgs)
 ament_target_dependencies(threesixty rclcpp std_msgs)
-ament_target_dependencies(incline rclcpp std_msgs)
+ament_target_dependencies(incline rclcpp std_msgs geometry_msgs)
 ament_target_dependencies(servo rclcpp std_msgs)
 
 target_link_libraries(servo robotcontrol)
