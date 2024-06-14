@@ -12,7 +12,7 @@ class InclineNode : public rclcpp::Node
 {
 public:
     InclineNode()
-        : Node("incline"), motor_running_(false), theta_(0), tilt_counter_(0), no_hitch_counter_(0)
+        : Node("incline"), motor_running_(false), theta_(0), tilt_counter_(0), no_hitch_counter_(0), stop_counter_(0)
     {
         //Set up motor subscriber: runs motor when 1, stops motor when 0
         motor_status_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -103,7 +103,7 @@ private:
 		        tilt_counter_ = 0;
 	        }
 
-            if (tilt_counter_ > 5) {  // Threshold for significant tilt
+            if (tilt_counter_ > 8) {  // Threshold for significant tilt
                 RCLCPP_INFO(this->get_logger(), "Significant tilt detected. Stopping motor.");
                 rc_motor_free_spin(1);
                 motor_running_ = false;
@@ -113,11 +113,8 @@ private:
             }
 
             if (no_hitch_counter_ > 120) {
-                auto vesc_msg_1 = geometry_msgs::msg::Twist();
-                vesc_msg_1.linear.x = -0.5;
-                vesc_publisher_->publish(vesc_msg_1);
                 vesc_timer_ = this->create_wall_timer(
-                    100ms, std::bind(&InclineNode::vesc_stop, this));
+                    20ms, std::bind(&InclineNode::vesc_stop, this));
                 no_hitch_counter_ = 0;
             }
 
@@ -131,10 +128,16 @@ private:
 
     void vesc_stop()
     {
+        stop_counter_ = stop_counter_ + 1;
         auto vesc_msg_2 = geometry_msgs::msg::Twist();
-        vesc_msg_2.linear.x = 0.0;
+        vesc_msg_2.linear.x = -0.5;
         vesc_publisher_->publish(vesc_msg_2);
-        vesc_timer_->cancel();
+        if (stop_counter_ > 3) {
+            vesc_msg_2.linear.x = 0.0;
+            vesc_publisher_->publish(vesc_msg_2);
+            stop_counter_ = 0;
+            vesc_timer_->cancel();
+        }
 
     }
 
@@ -157,6 +160,7 @@ private:
     double theta_;
     int32_t tilt_counter_;
     int32_t no_hitch_counter_;
+    int32_t stop_counter_;
 };
 
 int main(int argc, char *argv[])
