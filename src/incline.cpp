@@ -20,8 +20,8 @@ public:
         timer_ = this->create_wall_timer(
             50ms, std::bind(&InclineNode::control_loop, this));
 
-	status_timer_ = this->create_wall_timer(
-	    1000ms, std::bind(&InclineNode::status_loop, this));
+	    status_timer_ = this->create_wall_timer(
+	        1000ms, std::bind(&InclineNode::status_loop, this));
 
         // Initialize robot control library
         if (rc_initialize() != 0) {
@@ -30,19 +30,19 @@ public:
         }
         RCLCPP_INFO(this->get_logger(), "RC Library has been initialized");
 
-	// Initialize Motors
-	if (rc_motor_init() != 0) {
-	    RCLCPP_FATAL(this->get_logger(), "Failed to initialize motor");
-	    rclcpp::shutdown();
-	}
+	    // Initialize Motors
+	    if (rc_motor_init() != 0) {
+	        RCLCPP_FATAL(this->get_logger(), "Failed to initialize motor");
+	        rclcpp::shutdown();
+    	}
 
-	// Initialize IMU
-	rc_mpu_config_t conf = rc_mpu_default_config();
-	conf.i2c_bus = 2;
-	if (rc_mpu_initialize(&data_, conf) != 0) {
-	    RCLCPP_FATAL(this->get_logger(), "Failed to initialize MPU");
+	    // Initialize IMU
+	    rc_mpu_config_t conf = rc_mpu_default_config();
+	    conf.i2c_bus = 2;
+	    if (rc_mpu_initialize(&data_, conf) != 0) {
+	        RCLCPP_FATAL(this->get_logger(), "Failed to initialize MPU");
             rclcpp::shutdown();
-	}
+	    }
         RCLCPP_INFO(this->get_logger(), "IMU has been initialized");
 
         // Set motor to freewheel at the start
@@ -53,7 +53,7 @@ public:
     {
         // Cleanup robot control library
         rc_motor_free_spin(1);
-	rc_mpu_power_off();
+	    rc_mpu_power_off();
         rc_cleanup();
     }
 
@@ -69,25 +69,25 @@ private:
 
     void control_loop()
     {
-	if (rc_mpu_read_accel(&data_) != 0) {
-	    RCLCPP_WARN(this->get_logger(), "Failed to read accelerometer data");
-	    return;
-	}
+	    if (rc_mpu_read_accel(&data_) != 0) {
+	        RCLCPP_WARN(this->get_logger(), "Failed to read accelerometer data");
+	        return;
+	    }
 
-	double x = data_.accel[0];
-	double y = data_.accel[1];
-	double z = data_.accel[2];
-	theta_ = atan(y/z);
+	    double x = data_.accel[0];
+	    double y = data_.accel[1];
+	    double z = data_.accel[2];
+	    theta_ = atan(y/z);
 
 
         if (motor_running_) {
 
-	    if (theta_ < -0.08) {
-		counter_ ++;
-	    }
-	    else {
-		counter_ = 0;
-	    }
+	        if (theta_ < -0.08) {
+		        counter_ ++;
+	        }
+	        else {
+		        counter_ = 0;
+	        }
 
             if (counter_ > 5) {  // Threshold for significant tilt
                 RCLCPP_INFO(this->get_logger(), "Significant tilt detected. Stopping motor.");
@@ -99,8 +99,8 @@ private:
 
         }
 
-	//Status Logger
-	//RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d", motor_running_, x, y, z, theta_, counter_);
+	    //Status Logger
+	    RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d", motor_running_, x, y, z, theta_, counter_);
 
     }
 
