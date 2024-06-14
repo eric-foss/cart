@@ -22,18 +22,12 @@ public:
         }
         RCLCPP_INFO(this->get_logger(), "RC Library has been initialized");
 
-	if (rc_servo_init() != 0) {
-	    RCLCPP_FATAL(this->get_logger(), "Failed to initialize servos");
-	    rclcpp::shutdown();
-	}
-	RCLCPP_INFO(this->get_logger(), "Servos have been initialized");
 
     }
 
     ~ServoNode()
     {
 	//Cleanup
-	rc_servo_cleanup();
 	rc_cleanup();
     }
 
@@ -42,10 +36,11 @@ private:
     {
 	if (msg->data) {
 	    RCLCPP_INFO(this->get_logger(), "Servo 1 Dispensing");
-	    rc_servo_send_pulse_normalized(1, 0.5);
+	    system("sudo /home/ubuntu/ros2_foxy/bash_scripts/dispense_servo1.sh");
 	} else {
 	    RCLCPP_INFO(this->get_logger(), "Servo 1 Retracting");
-	    rc_servo_send_pulse_normalized(1, -1.5);
+	    system("sudo rc_test_servos -c 1 -p -1.5");
+
 	}
     }
 
@@ -54,12 +49,12 @@ private:
         if (msg->data)
         {
             RCLCPP_INFO(this->get_logger(), "Servo 2 Dispensing");
-            rc_servo_send_pulse_normalized(2, -1.5); 
+            system("sudo rc_test_servos -c 2 -p -1.5");
         }
         else
         {
             RCLCPP_INFO(this->get_logger(), "Servo 2 Retracting");
-            rc_servo_send_pulse_normalized(2, 1.5);
+            system("sudo rc_test_servos -c 2 -p 1.5");
         }
     }
 
