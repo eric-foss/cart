@@ -1,0 +1,1 @@
+ROS2 Foxy package for the cart that is hitched to the back of the Jetson Nano powered MAE148 RC car. ROS2 Foxy was built from source and the Robot Control Library is heavily utilized to power the two servos, 6V DC motor, and quadrator encoder. 
