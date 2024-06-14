@@ -99,10 +99,10 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Significant tilt detected. Stopping motor.");
                 rc_motor_free_spin(1);
                 motor_running_ = false;
-                auto msg = std_msgs::msg:Bool();
+                auto msg = std_msgs::msg::Bool();
                 msg.data = false;
                 cart_status_publisher_->publish(msg);
-                
+
             }
 
         }
