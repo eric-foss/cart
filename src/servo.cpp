@@ -36,10 +36,10 @@ private:
     {
 	if (msg->data) {
 	    RCLCPP_INFO(this->get_logger(), "Servo 1 Dispensing");
-	    system("sudo /home/ubuntu/ros2_foxy/bash_scripts/dispense_servo1.sh");
+	    system("sudo /home/ubuntu/ros2_foxy/src/cart/c_scripts/move_servo -c 1 -p 0.5");
 	} else {
 	    RCLCPP_INFO(this->get_logger(), "Servo 1 Retracting");
-	    system("sudo rc_test_servos -c 1 -p -1.5");
+	    system("sudo /home/ubuntu/ros2_foxy/src/cart/c_scripts/move_servo -c 1 -p -1.5");
 
 	}
     }
@@ -49,12 +49,12 @@ private:
         if (msg->data)
         {
             RCLCPP_INFO(this->get_logger(), "Servo 2 Dispensing");
-            system("sudo rc_test_servos -c 2 -p -1.5");
+            system("sudo /home/ubuntu/ros2_foxy/src/cart/c_scripts/move_servo -c 2 -p -1.5");
         }
         else
         {
             RCLCPP_INFO(this->get_logger(), "Servo 2 Retracting");
-            system("sudo rc_test_servos -c 2 -p 1.5");
+            system("sudo /home/ubuntu/ros2_foxy/src/cart/c_scripts/move_servo -c 2 -p 1.5");
         }
     }
 

@@ -19,14 +19,14 @@ static void __signal_handler(__attribute__ ((unused)) int dummy)
 int main(int argc, char *argv[])
 {
 
-	int ch;
-	double servo_pos;
+	int ch = -1;
+	double servo_pos = 0.0;
 	int frequency_hz = 50;
 	int counter = 0;
 	int c;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "c:p")) != -1){
+	while ((c = getopt(argc, argv, "c:p:")) != -1){
 		switch (c){
 			case 'c':
 				ch = atoi(optarg);
@@ -46,6 +46,11 @@ int main(int argc, char *argv[])
 				printf("\nInvalid Argument \n");
 				return -1;
 		}
+	}
+
+	if (ch == -1 || servo_pos == 0.0) {
+		fprintf(stderr, "ERROR: Both channel (-c) and position (-p) must be specified \n");
+		return -1;
 	}
 
 	signal(SIGINT, __signal_handler);
