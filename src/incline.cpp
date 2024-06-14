@@ -13,9 +13,15 @@ public:
     InclineNode()
         : Node("incline"), motor_running_(false), theta_(0), counter_(0)
     {
-        start_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
+        //Set up motor subscriber: runs motor when 1, stops motor when 0
+        motor_status_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
             "motor_status", 10, std::bind(&InclineNode::start_motor_callback, this, std::placeholders::_1));
-        completion_publisher_ = this->create_publisher<std_msgs::msg::Empty>("operation_complete", 10);
+        
+        //Set up cart status publisher: wants to rotate when 1, doesn't when 0
+        cart_status_publisher_ = this->create_publisher<std_msgs::msg::Bool>("cart_status", 10);
+        auto msg std_msgs::msg:Bool();
+        msg.data = true;
+        cart_status_publisher_->publish(msg);
 
         timer_ = this->create_wall_timer(
             50ms, std::bind(&InclineNode::control_loop, this));
@@ -93,14 +99,16 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Significant tilt detected. Stopping motor.");
                 rc_motor_free_spin(1);
                 motor_running_ = false;
-                auto msg = std_msgs::msg::Empty();
-                completion_publisher_->publish(msg);
+                auto msg = std_msgs::msg:Bool();
+                msg.data = false;
+                cart_status_publisher_->publish(msg);
+                
             }
 
         }
 
 	    //Status Logger
-	    RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d", motor_running_, x, y, z, theta_, counter_);
+	    //RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d", motor_running_, x, y, z, theta_, counter_);
 
     }
 
@@ -112,8 +120,8 @@ private:
     }
 
 
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr start_subscription_;
-    rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr completion_publisher_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr motor_status_subscription_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr cart_status_publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::TimerBase::SharedPtr status_timer_;
     rc_mpu_data_t data_;
