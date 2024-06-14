@@ -19,7 +19,7 @@ public:
         
         //Set up cart status publisher: wants to rotate when 1, doesn't when 0
         cart_status_publisher_ = this->create_publisher<std_msgs::msg::Bool>("cart_status", 10);
-        auto msg std_msgs::msg:Bool();
+        auto msg = std_msgs::msg::Bool();
         msg.data = true;
         cart_status_publisher_->publish(msg);
 
