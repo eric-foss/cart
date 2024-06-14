@@ -1,6 +1,9 @@
+#include <chrono>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <robotcontrol.h>
+
+using namespace std::chrono_literals;
 
 class ServoNode : public rclcpp::Node
 {
@@ -14,6 +17,9 @@ public:
 	    "servo1", 10, std::bind(&ServoNode::servo1_callback, this, std::placeholders::_1));
 	servo2_subscriber_ = this->create_subscription<std_msgs::msg::Bool>(
 	    "servo2", 10, std::bind(&ServoNode::servo2_callback, this, std::placeholders::_1));
+
+	//Status Timer
+	status_timer_ = this->create_wall_timer(1000ms, std::bind(&ServoNode::status_loop, this));
 
     }
 
@@ -50,8 +56,16 @@ private:
         }
     }
 
+    void status_loop()
+    {
+
+	RCLCPP_INFO(this->get_logger(), "Servo Node Running");
+
+    }
+
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr servo1_subscriber_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr servo2_subscriber_;
+    rclcpp::TimerBase::SharedPtr status_timer_;
 
 };
 

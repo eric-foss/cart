@@ -14,7 +14,7 @@ public:
         : Node("incline"), motor_running_(false), theta_(0), counter_(0)
     {
         start_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
-            "start_motor", 10, std::bind(&InclineNode::start_motor_callback, this, std::placeholders::_1));
+            "motor_status", 10, std::bind(&InclineNode::start_motor_callback, this, std::placeholders::_1));
         completion_publisher_ = this->create_publisher<std_msgs::msg::Empty>("operation_complete", 10);
 
         timer_ = this->create_wall_timer(
