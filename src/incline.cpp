@@ -3,6 +3,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/empty.hpp>
+#include <geometry_msgs/msg/Twist.hpp>
 #include <robotcontrol.h>
 
 using namespace std::chrono_literals;
@@ -11,7 +12,7 @@ class InclineNode : public rclcpp::Node
 {
 public:
     InclineNode()
-        : Node("incline"), motor_running_(false), theta_(0), counter_(0)
+        : Node("incline"), motor_running_(false), theta_(0), tilt_counter_(0), no_hitch_counter_(0)
     {
         //Set up motor subscriber: runs motor when 1, stops motor when 0
         motor_status_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -23,11 +24,14 @@ public:
         msg.data = true;
         cart_status_publisher_->publish(msg);
 
-        timer_ = this->create_wall_timer(
+        //Set up vesc publisher
+        vesc_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+
+        control_timer_ = this->create_wall_timer(
             50ms, std::bind(&InclineNode::control_loop, this));
 
 	    status_timer_ = this->create_wall_timer(
-	        1000ms, std::bind(&InclineNode::status_loop, this));
+	        5000ms, std::bind(&InclineNode::status_loop, this));
 
         // Initialize robot control library
         if (rc_initialize() != 0) {
@@ -88,27 +92,46 @@ private:
 
         if (motor_running_) {
 
+            no_hitch_counter_ ++;
+
 	        if (theta_ < -0.08) {
-		        counter_ ++;
+		        tilt_counter_ ++;
 	        }
 	        else {
-		        counter_ = 0;
+		        tilt_counter_ = 0;
 	        }
 
-            if (counter_ > 5) {  // Threshold for significant tilt
+            if (tilt_counter_ > 5) {  // Threshold for significant tilt
                 RCLCPP_INFO(this->get_logger(), "Significant tilt detected. Stopping motor.");
                 rc_motor_free_spin(1);
                 motor_running_ = false;
                 auto msg = std_msgs::msg::Bool();
                 msg.data = false;
                 cart_status_publisher_->publish(msg);
-
             }
+
+            if (no_hitch_counter_ > 40) {
+                auto vesc_msg_1 = geometry_msgs::msg::Twist();
+                vesc_msg_1.linear.x = -0.5;
+                vesc_publisher_->publish(vesc_msg_1);
+                vesc_timer_ = this->create_wall_timer(
+                    500ms, std::bind(&InclineNode::vesc_stop, this));
+            }
+
 
         }
 
 	    //Status Logger
 	    //RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d", motor_running_, x, y, z, theta_, counter_);
+
+    }
+
+    void vesc_stop()
+    {
+        auto vesc_msg_2 = geometry_msgs::msg::Twist();
+        vesc_msg_2.linear.x = 0.0;
+        vesc_publisher_->publish(vesc_msg_2);
+        vesc_timer_->cancel();
 
     }
 
@@ -122,12 +145,16 @@ private:
 
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr motor_status_subscription_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr cart_status_publisher_;
-    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vesc_publisher_;
+    rclcpp::TimerBase::SharedPtr control_timer_;
     rclcpp::TimerBase::SharedPtr status_timer_;
+    rclcpp::TimerBase::SharedPtr vesc_timer_;
+    rclcpp
     rc_mpu_data_t data_;
     bool motor_running_;
     double theta_;
-    int32_t counter_;
+    int32_t tilt_counter_;
+    int32_t no_hitch_counter_;
 };
 
 int main(int argc, char *argv[])

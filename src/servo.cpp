@@ -19,7 +19,7 @@ public:
 	    "servo2", 10, std::bind(&ServoNode::servo2_callback, this, std::placeholders::_1));
 
 	//Status Timer
-	status_timer_ = this->create_wall_timer(1000ms, std::bind(&ServoNode::status_loop, this));
+	status_timer_ = this->create_wall_timer(5000ms, std::bind(&ServoNode::status_loop, this));
 
     }
 
