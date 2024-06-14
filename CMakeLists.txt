@@ -28,12 +28,15 @@ add_executable(rotate src/rotate.cpp)
 add_executable(threesixty src/threesixty.cpp)
 add_executable(magnetometer_node src/magnetometer_node.cpp)
 add_executable(incline src/incline.cpp)
+add_executable(servo src/servo.cpp)
 ament_target_dependencies(motor rclcpp std_msgs)
 ament_target_dependencies(magnetometer_node rclcpp std_msgs)
 ament_target_dependencies(rotate rclcpp std_msgs)
 ament_target_dependencies(threesixty rclcpp std_msgs)
 ament_target_dependencies(incline rclcpp std_msgs)
+ament_target_dependencies(servo rclcpp std_msgs)
 
+target_link_libraries(servo robotcontrol)
 target_link_libraries(incline robotcontrol)
 target_link_libraries(motor robotcontrol)
 target_link_libraries(rotate robotcontrol)
@@ -43,6 +46,7 @@ target_link_libraries(threesixty robotcontrol)
 install(TARGETS
   magnetometer_node
   incline
+  servo
   motor
   rotate
   threesixty
