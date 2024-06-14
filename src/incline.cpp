@@ -20,6 +20,9 @@ public:
         timer_ = this->create_wall_timer(
             50ms, std::bind(&InclineNode::control_loop, this));
 
+	status_timer_ = this->create_wall_timer(
+	    1000ms, std::bind(&InclineNode::status_loop, this));
+
         // Initialize robot control library
         if (rc_initialize() != 0) {
             RCLCPP_FATAL(this->get_logger(), "Failed to initialize robot control library");
@@ -27,6 +30,13 @@ public:
         }
         RCLCPP_INFO(this->get_logger(), "RC Library has been initialized");
 
+	// Initialize Motors
+	if (rc_motor_init() != 0) {
+	    RCLCPP_FATAL(this->get_logger(), "Failed to initialize motor");
+	    rclcpp::shutdown();
+	}
+
+	// Initialize IMU
 	rc_mpu_config_t conf = rc_mpu_default_config();
 	conf.i2c_bus = 2;
 	if (rc_mpu_initialize(&data_, conf) != 0) {
@@ -89,14 +99,23 @@ private:
 
         }
 
-	RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d",
-                    motor_running_, x, y, z, theta_, counter_);
+	//Status Logger
+	//RCLCPP_INFO(this->get_logger(), "Status: %d, x_accel: %.3f, y_accel: %.3f, z_accel: %.3f, Tilt: %.3f, Counter: %d", motor_running_, x, y, z, theta_, counter_);
 
     }
+
+    void status_loop()
+    {
+
+	RCLCPP_INFO(this->get_logger(), "Incline Node Running");
+
+    }
+
 
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr start_subscription_;
     rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr completion_publisher_;
     rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::TimerBase::SharedPtr status_timer_;
     rc_mpu_data_t data_;
     bool motor_running_;
     double theta_;

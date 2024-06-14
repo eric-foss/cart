@@ -15,14 +15,6 @@ public:
 	servo2_subscriber_ = this->create_subscription<std_msgs::msg::Bool>(
 	    "servo2", 10, std::bind(&ServoNode::servo2_callback, this, std::placeholders::_1));
 
-	// Initialize robot control library
-        if (rc_initialize() != 0) {
-            RCLCPP_FATAL(this->get_logger(), "Failed to initialize robot control library");
-            rclcpp::shutdown();
-        }
-        RCLCPP_INFO(this->get_logger(), "RC Library has been initialized");
-
-
     }
 
     ~ServoNode()
