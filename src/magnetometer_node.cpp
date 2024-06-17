@@ -7,8 +7,6 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <robotcontrol.h>
 
-
-
 #define I2C_BUS 2
 #define GPIO_INT_PIN_CHIP 3
 #define GPIO_INT_PIN_PIN 21
@@ -109,7 +107,7 @@ private:
         integral_ += 0.01*error_;
         double derivative = error_ - prev_error_;
         double control_signal = std::max(-0.65, std::min(0.65, Kp_ * error_ + Ki_ * integral_ + Kd_ * derivative));
-	    prev_error_ = error;
+	    prev_error_ = error_;
 
         //RCLCPP_INFO(this->get_logger(), "Angle: %.2f, Filtered Heading: %.2f", angle, heading);
         // Check if latched
