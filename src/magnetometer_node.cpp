@@ -19,9 +19,9 @@ class MagnetometerNode : public rclcpp::Node
 public:
     MagnetometerNode() : Node("magnetometer_node")
     {
-
+        RCLCPP_INFO(this->get_logger(), "Node Set up Starting ...");
         // Set up control loop timer
-        control_timer_ = this->create_wall_timer(10ms, std::bind(&MagnetometerNode::control_loop, this));
+        control_timer_ = this->create_wall_timer(20ms, std::bind(&MagnetometerNode::control_loop, this));
 
         //Set up vesc publisher
         vesc_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
@@ -29,8 +29,8 @@ public:
         successful_latch_publisher_ = this->create_publisher<std_msgs::msg::Bool>("successful_latch", 10);
 
         //Set up tuning parameters
-        this->declare_parameter<double>("Kp", 0.0012); //0.0015
-        this->declare_parameter<double>("Ki", 0.00015); //0.00015
+        this->declare_parameter<double>("Kp", 0.005); //0.0015
+        this->declare_parameter<double>("Ki", 0.0005); //0.00015
         this->declare_parameter<double>("Kd", 0.0); //0.0
         this->get_parameter("Kp", Kp_);
         this->get_parameter("Ki", Ki_);
@@ -46,20 +46,21 @@ public:
             RCLCPP_FATAL(this->get_logger(), "Failed to initialize robot control library");
             rclcpp::shutdown();
         }
-	
+        RCLCPP_INFO(this->get_logger(), "Robot Control Library Initialized");
+
         // Initialize dmp IMU
 	    rc_mpu_config_t conf = rc_mpu_default_config();
 	    conf.i2c_bus = I2C_BUS;
 	    conf.gpio_interrupt_pin_chip = GPIO_INT_PIN_CHIP;
 	    conf.gpio_interrupt_pin = GPIO_INT_PIN_PIN;
 	    conf.enable_magnetometer = 1;
-	    conf.dmp_sample_rate = 150;
+	    conf.dmp_sample_rate = 100;
         // Initialize the magnetometer
         if (rc_mpu_initialize_dmp(&mpu_data_, conf) != 0) {
             RCLCPP_FATAL(this->get_logger(), "Failed to initialize MPU");
             rclcpp::shutdown();
         }
-
+        RCLCPP_INFO(this->get_logger(), "MPU DMP Initialized");
         // Initialize motors
         // Initialize Motors
         if (rc_motor_init() != 0) {
@@ -67,6 +68,7 @@ public:
             rclcpp::shutdown();
         }
         rc_motor_free_spin(1);
+        RCLCPP_INFO(this->get_logger(), "Motor Initialized");
 
         RCLCPP_INFO(this->get_logger(), "Magnetometer node has been initialized");
     }
