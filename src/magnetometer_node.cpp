@@ -40,6 +40,9 @@ public:
         prev_error_ = 0.0;
         tilt_counter_ = 0;
 
+        // Set up parameter change callback
+        parameter_callback_handle_ = this->add_on_set_parameters_callback(std::bind(&MagnetometerNode::parameter_callback, this, std::placeholders::_1));
+
 
         // Initialize the robot control library
         if (rc_initialize() != 0) {
@@ -158,6 +161,7 @@ private:
         return result;
     }
 
+    OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
     rclcpp::TimerBase::SharedPtr control_timer_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr successful_latch_publisher_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr vesc_publisher_;
