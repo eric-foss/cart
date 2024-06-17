@@ -2,8 +2,10 @@
 #include <memory>
 #include <cmath>
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <robotcontrol.h>
+#include <geometry_msgs/msg/twist.hpp>
 
 #define I2C_BUS 2
 #define GPIO_INT_PIN_CHIP 3
@@ -24,7 +26,7 @@ public:
         //Set up vesc publisher
         vesc_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
-        successful_latch_publisher = this->create_publisher<std_msgs::msg::Bool>("successful_latch", 10);
+        successful_latch_publisher_ = this->create_publisher<std_msgs::msg::Bool>("successful_latch", 10);
 
         //Set up tuning parameters
         this->declare_parameter<double>("Kp", 0.0012); //0.0015
@@ -36,6 +38,7 @@ public:
 
         desired_angle_ = 0.0;
         prev_error_ = 0.0;
+        tilt_counter_ = 0;
 
 
         // Initialize the robot control library
@@ -90,20 +93,20 @@ private:
         double accel_x = mpu_data_.accel[0];
         double accel_y = mpu_data_.accel[1];
         double accel_z = mpu_data_.accel[2];
-        theta_ = atan(y/z);
+        theta_ = atan(accel_y/accel_z);
 
         // Compute the angle of the y-axis with respect to north
         double angle = atan2(mag_x, mag_y);
 	    angle = 180 * angle / 3.141592;
 
 	    // Convert Filtered Heading to y axis and compute error
-	    heading = 180 * heading / 3.141592;
-	    heading = heading + 90.0;
-        error_ = desired_angle_ - heading;
+	    heading_ = 180 * heading_ / 3.141592;
+	    heading_ = heading_ + 90.0;
+        error_ = desired_angle_ - heading_;
 
-        intergral_ += 0.01*error_;
+        integral_ += 0.01*error_;
         double derivative = error_ - prev_error_;
-        double control_signal = std::max(-0.65, std::min(0.65, Kp_ * error + Ki_ * integral_ + Kd_ * derivative));
+        double control_signal = std::max(-0.65, std::min(0.65, Kp_ * error_ + Ki_ * integral_ + Kd_ * derivative));
 	    prev_error_ = error;
 
         //RCLCPP_INFO(this->get_logger(), "Angle: %.2f, Filtered Heading: %.2f", angle, heading);
@@ -117,9 +120,8 @@ private:
         if (tilt_counter_ > 5) {  // Threshold for significant tilt
             RCLCPP_INFO(this->get_logger(), "Significant tilt detected. Stopping motor.");
             rc_motor_free_spin(1);
-            motor_running_ = false;
             auto msg = std_msgs::msg::Bool();
-            msg.data = True;
+            msg.data = true;
             successful_latch_publisher_->publish(msg);
             control_timer_->cancel();
         }
@@ -146,9 +148,7 @@ private:
                 Ki_ = param.as_double();
             } else if (param.get_name() == "Kd") {
                 Kd_ = param.as_double();
-            } else if (param.get_name() == "theta") {
-		rotate_angle_ = param.as_double();
-	    }
+            }
         }
 
         rcl_interfaces::msg::SetParametersResult result;
@@ -167,6 +167,7 @@ private:
     double Kp_, Ki_, Kd_;
     double prev_error_;
     double integral_;
+    int32_t tilt_counter_;
 };
 
 
